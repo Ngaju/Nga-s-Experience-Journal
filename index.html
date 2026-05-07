@@ -73,10 +73,11 @@
         }
         .decor-top { 
             position: absolute; top: 0; left: 0; 
-            width: 100vw; height: 600px; /* Force width to 100% of viewport */
-            background-size: 100% auto; /* Stretch image to touch both vertical edges */
+            width: 100vw; height: 600px; 
+            background-size: 100% auto; 
             background-position: top center; 
             background-repeat: no-repeat; 
+            transition: 0.3s;
         }
         .decor-bottom { 
             position: absolute; bottom: 0; left: 0; 
@@ -86,10 +87,29 @@
             background-repeat: no-repeat; 
         }
 
+        /* ----- CÀI ĐẶT CHO MÁY TÍNH (Mặc định) ----- */
         .theme-plants .decor-top { background-image: url('1.png'); }
         .theme-animals .decor-top { background-image: url('4.png'); }
         .theme-micro .decor-top { background-image: url('9.png'); }
         .theme-else .decor-top { background-image: url('10.png'); }
+        /* Bạn giữ nguyên các dòng decor-bottom cho PC nếu có file png tương ứng */
+
+        /* ----- CÀI ĐẶT RIÊNG CHO ĐIỆN THOẠI ----- */
+        @media (max-width: 800px) {
+            /* Đổi sang các file .jpg bạn đã cung cấp */
+            .theme-plants .decor-top { background-image: url('2.png'); }
+            .theme-animals .decor-top { background-image: url('3.png'); }
+            .theme-micro .decor-top { background-image: url('7.png'); }
+            
+            .decor-top {
+                height: 100% !important; /* Cho ảnh phủ hết chiều cao màn hình điện thoại */
+                background-size: cover !important; /* Đảm bảo ảnh không bị méo */
+                background-position: center !important;
+            }
+            
+            /* Ẩn ảnh trang trí dưới chân trang trên mobile để tránh rối mắt */
+            .decor-bottom { display: none; } 
+        }
 
         /* =========================================
            5. POSTS CONTAINER
