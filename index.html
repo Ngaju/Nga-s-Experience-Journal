@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nga's Science Journal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lora:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           1. THEME COLORS
+           ========================================= */
+        :root {
+            --p-bg: #354228; --p-card: #a3b18a; 
+            --a-bg: #f2f1e3; --a-card: #d4d18d; 
+            --m-bg: #e5e5e5; --m-card: #4a4a4a; 
+            --e-bg: #d9e4ea; --e-card: #8eb9cf; 
+        }
+
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif; 
+            background-color: #f9f9f9; 
+            overflow: hidden; 
+        }
+
+        /* =========================================
+           2. NAVIGATION BAR (HEADER)
+           ========================================= */
+        header {
+            background: white; padding: 0 5%; height: 75px;
+            display: flex; justify-content: space-between; align-items: center; 
+            position: relative; z-index: 2000; border-bottom: 1px solid #eee;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .logo { font-family: 'Lora', serif; font-size: 20px; font-weight: bold; cursor: pointer; color: #333; text-decoration: none; flex: 1; display: flex; align-items: center; margin: 0; }
+        .search-container { flex: 1; display: flex; justify-content: center; align-items: center; position: relative;}
+        .search-container input { width: 80%; max-width: 300px; padding: 10px 15px; margin: 0; border-radius: 20px; border: 1px solid #ccc; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: 0.3s; transform: translateY(1px); }
+        .search-container input:focus { border-color: #333; width: 100%; }
+        nav { display: flex; gap: 30px; flex: 1; justify-content: flex-end; align-items: center; margin: 0; }
+        .nav-item { text-decoration: none; color: #333; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; border: none; background: none; padding: 0; transform: translateY(1px); }
+        .nav-item:hover { color: #888; }
+
+        @media (max-width: 800px) {
+            header { flex-direction: column; height: auto; padding: 15px 5%; gap: 15px; }
+            .search-container input { width: 100%; max-width: none; transform: translateY(0); }
+            .nav-item { transform: translateY(0); }
+        }
+
+        /* =========================================
+           3. HERO & CATEGORIES MENU
+           ========================================= */
+        .hero-section { width: 100%; height: calc(100vh - 75px); overflow-y: auto; }
+        .hero-image { width: 100%; height: auto; display: block; }
+        .hero-desktop { display: block; }
+        .hero-mobile { display: none; }
+        @media (max-width: 800px) { .hero-desktop { display: none; } .hero-mobile { display: block; } }
+
+        #category-menu {
+            background: #fff; padding: 20px; display: none; justify-content: center; gap: 15px; border-bottom: 1px solid #eee;
+            animation: slideDown 0.3s ease-out; flex-wrap: wrap; z-index: 1500; position: absolute; width: 100%; box-sizing: border-box;
+        }
+        @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .cat-btn { padding: 8px 20px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: 600; font-size: 12px; color: #333; }
+        .cat-btn:hover { background: #f0f0f0; }
+
+        /* =========================================
+           4. DECORATIONS
+           ========================================= */
+       .decor-container {
+            position: fixed; top: 75px; left: 0; width: 100vw; height: calc(100vh - 75px);
+            pointer-events: none; z-index: 1; display: none; overflow: hidden;
+        }
+        .decor-top { 
+            position: absolute; top: 0; left: 0; 
+            width: 100vw; height: 600px; 
+            background-size: 100% auto; 
+            background-position: top center; 
+            background-repeat: no-repeat; 
+        }
+        .decor-bottom { 
+            position: absolute; bottom: 0; left: 0; 
+            width: 100vw; height: 600px; 
+            background-size: 100% auto; 
+            background-position: bottom center; 
+            background-repeat: no-repeat; 
+        }
+
+        .theme-plants .decor-top { background-image: url('1.png'); }
+        .theme-animals .decor-top { background-image: url('4.png'); }
+        .theme-micro .decor-top { background-image: url('9.png'); }
+        .theme-else .decor-top { background-image: url('10.png'); }
+
+        /* =========================================
+           5. POSTS CONTAINER
+           ========================================= */
+        .scroll-area {
+            position: relative; z-index: 10; 
+            height: calc(100vh - 75px); 
+            overflow-y: auto; 
+            padding-bottom: 100px; display: none;
+            background: transparent; 
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .page-title { font-family: 'Lora', serif; font-size: 40px; text-align: center; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 4px; display: block; color: inherit; }
+        .post-grid { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 900px) { .post-grid { grid-template-columns: 1fr; } }
+
+        /* =========================================
+           6. POST CARD
+           ========================================= */
+        .post-card {
+            padding: 30px; border-radius: 8px; position: relative;
+            display: flex; flex-direction: column; height: 350px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); overflow: hidden;
+            background: white; 
+        }
+        .post-card img.post-image { width: 100%; height: 160px; object-fit: cover; border-radius: 4px; margin-top: 15px; border: 1px solid rgba(0,0,0,0.1); }
+        .post-card h3 { font-family: 'Lora', serif; font-size: 20px; margin: 15px 0 10px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .post-card p { flex-grow: 1; line-height: 1.6; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0;}
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 13px; font-weight: bold; }
+        .read-more { text-decoration: underline; cursor: pointer; color: inherit; }
+
+        /* Theme Colors Applied */
+        body.theme-plants { background: var(--p-bg); color: white; }
+        .theme-plants .post-card { background: var(--p-card); color: #1b2612; }
+        
+        body.theme-animals { background: var(--a-bg); color: #333; }
+        .theme-animals .logo { color: var(--a-card); }
+        .theme-animals .post-card { background: var(--a-card); border: 1px solid rgba(0,0,0,0.1);}
+        
+        body.theme-micro { background: var(--m-bg); color: #1a1a1a; }
+        .theme-micro .logo { color: #555; }
+        .theme-micro .post-card { background: var(--m-card); color: white; }
+        .theme-micro .page-title { color: #ffffff; } 
+        
+        body.theme-else { background: var(--e-bg); color: #2c3e50; }
+        .theme-else .logo { color: var(--e-card); }
+        .theme-else .post-card { background: var(--e-card); color: white; }
+
+        /* =========================================
+           7. CREATE POST MODAL 
+           ========================================= */
+        .admin-wrapper { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            background: rgba(0,0,0,0.6); z-index: 5000; 
+            display: none; justify-content: center; align-items: center; 
+            backdrop-filter: blur(4px);
+        }
+        .admin-section { 
+            width: 90%; max-width: 650px; padding: 40px; 
+            background: #ffffff; border-radius: 12px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
+            color: #333; position: relative; max-height: 85vh; overflow-y: auto;
+        }
+        .admin-section .close-modal { 
+            position: absolute; top: 15px; right: 20px; font-size: 30px; 
+            cursor: pointer; color: #999; border: none; background: none; 
+            transition: 0.2s;
+        }
+        .admin-section .close-modal:hover { color: #111; }
+
+        .admin-section h3 { font-family: 'Lora', serif; font-size: 26px; margin-top: 0; margin-bottom: 25px; color: #222; }
+        .admin-section label { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: block; color: #444;}
+        
+        .admin-section input[type="text"], 
+        .admin-section input[type="date"], 
+        .admin-section select, 
+        .admin-section textarea { 
+            width: 100%; padding: 12px 15px; margin-bottom: 20px; 
+            border: 1px solid #ddd; border-radius: 8px; 
+            background: #f9f9f9; font-family: 'Inter', sans-serif; font-size: 14px; 
+            transition: all 0.3s ease; box-sizing: border-box;
+        }
+        .admin-section input:focus, 
+        .admin-section select:focus, 
+        .admin-section textarea:focus { border-color: #333; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
+        
+        .image-upload-block { background: #f4f6f8; padding: 20px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; position: relative; }
+        .btn-add-img { background: #fdf5d3; color: #333; border: 1px solid #e8dca4; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; margin-bottom: 20px; transition: 0.2s; font-size: 14px;}
+        .btn-add-img:hover { background: #faeaa0; }
+        .btn-remove-img { color: #e74c3c; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: bold; position: absolute; top: 12px; right: 15px; }
+
+        .btn-post { background: #1a1a1a; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: 8px; letter-spacing: 1px; transition: 0.3s; }
+        .btn-post:hover { background: #333; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+        /* =========================================
+           8. DETAILS MODAL & FLOATING CAT BUTTON
+           ========================================= */
+        .floating-btn {
+            position: fixed; bottom: 30px; right: 30px; width: 110px; height: 110px;
+            background: transparent; border: none; 
+            cursor: pointer; z-index: 3000; transition: transform 0.2s;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .floating-btn:hover { transform: scale(1.1); } 
+        .cat-emoji { font-size: 53px; position: absolute; z-index: 1; }
+        .floating-btn img { width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 2; border-radius: 50%;} 
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 4000; display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white; color: #333; width: 90%; max-width: 750px;
+            max-height: 85vh; overflow-y: auto; border-radius: 12px;
+            padding: 40px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #888; border: none; background: none; }
+        .close-modal:hover { color: #111; }
+        
+        .figure-container { margin: 25px 0; text-align: center; background: #f4f4f4; padding: 15px; border-radius: 8px;}
+        .figure-container img { width: 100%; max-height: 500px; object-fit: contain; border-radius: 5px; display: block; margin: 0 auto; }
+        .figure-container figcaption { font-style: italic; color: #555; margin-top: 10px; font-size: 15px; }
+        
+        .modal-content h2 { font-family: 'Lora', serif; font-size: 32px; margin-bottom: 5px; }
+        .modal-content p { line-height: 1.8; font-size: 16px; white-space: pre-wrap; }
+        
+        .modal-actions { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: flex-end; gap: 15px;}
+        .modal-edit-btn { background: #1a1a1a; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; }
+        .modal-edit-btn:hover { background: #333; }
+        .modal-delete-btn { background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; }
+        .modal-delete-btn:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="#" onclick="goHome()" class="logo">Nga's Science Journal</a>
+    <div class="search-container">
+        <input type="text" id="searchInput" onkeyup="searchPosts()" placeholder="Search posts by title...">
+    </div>
+    <nav>
+        <button class="nav-item" onclick="goHome()">About me</button>
+        <button class="nav-item" onclick="toggleCategories()">Categories</button>
+    </nav>
+</header>
+
+<div id="category-menu">
+    <button class="cat-btn" onclick="switchTheme('theme-plants')">PLANTS</button>
+    <button class="cat-btn" onclick="switchTheme('theme-animals')">ANIMALS</button>
+    <button class="cat-btn" onclick="switchTheme('theme-micro')">MICROBIOLOGY</button>
+    <button class="cat-btn" onclick="switchTheme('theme-else')">SOMETHING ELSE</button>
+</div>
+
+<div class="decor-container" id="decor-container">
+    <div class="decor-top"></div>
+    <div class="decor-bottom"></div>
+</div>
+
+<section class="hero-section" id="home-hero">
+    <img src="Beige Modern Personal Instagram Post (2560 x 1440 px).png" class="hero-image hero-desktop" alt="Home Desktop">
+    <img src="Beige Modern Personal Instagram Post.jpg" class="hero-image hero-mobile" alt="Home Mobile">
+</section>
+
+<div class="admin-wrapper" id="admin-panel" onclick="closeAdminPanel()">
+    <div class="admin-section" onclick="event.stopPropagation()">
+        <button class="close-modal" onclick="closeAdminPanel()">&times;</button>
+        <h3 id="formTitle">Create New Post</h3>
+        <input type="hidden" id="editFirebaseKey" value="">
+
+        <label>Category</label>
+        <select id="pCat">
+            <option value="theme-plants">Plants</option>
