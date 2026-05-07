@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -65,7 +65,7 @@
         .cat-btn:hover { background: #f0f0f0; }
 
         /* =========================================
-           4. DECORATIONS
+           4. DECORATIONS (FIXED TẬN GỐC)
            ========================================= */
        .decor-container {
             position: fixed; top: 75px; left: 0; width: 100vw; height: calc(100vh - 75px);
@@ -73,8 +73,8 @@
         }
         .decor-top { 
             position: absolute; top: 0; left: 0; 
-            width: 100vw; height: 600px; 
-            background-size: 100% auto; 
+            width: 100vw; height: 600px; /* Force width to 100% of viewport */
+            background-size: 100% auto; /* Stretch image to touch both vertical edges */
             background-position: top center; 
             background-repeat: no-repeat; 
         }
@@ -258,8 +258,306 @@
     <div class="admin-section" onclick="event.stopPropagation()">
         <button class="close-modal" onclick="closeAdminPanel()">&times;</button>
         <h3 id="formTitle">Create New Post</h3>
-        <input type="hidden" id="editFirebaseKey" value="">
+        <input type="hidden" id="editPostId" value="">
 
         <label>Category</label>
         <select id="pCat">
             <option value="theme-plants">Plants</option>
+            <option value="theme-animals">Animals</option>
+            <option value="theme-micro">Microbiology</option>
+            <option value="theme-else">Something Else</option>
+        </select>
+
+        <label>Post Title</label>
+        <input type="text" id="pTitle" placeholder="Enter post title...">
+
+        <label>Date</label>
+        <input type="date" id="pDate">
+
+        <label>Post Content</label>
+        <textarea id="pContent" rows="8" placeholder="Post Content..."></textarea>
+        
+        <label>Images (Optional)</label>
+        <div id="image-blocks-container"></div>
+        <button type="button" class="btn-add-img" onclick="addImageBlock()">+ Add Image & Caption</button>
+
+        <button class="btn-post" id="submitBtn" onclick="savePost()">SAVE POST</button>
+        <p style="font-size: 12px; color: #888; margin-top: 15px; text-align: center;">*Note: If editing an old post without uploading new images, the existing images will be kept automatically.</p>
+    </div>
+</div>
+
+<div class="scroll-area" id="journal-scroll-area">
+    <div class="container">
+        <h1 class="page-title" id="theme-title">Theme Title</h1>
+        <div class="post-grid" id="main-grid"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="postModal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <button class="close-modal" onclick="closeModal(event)">&times;</button>
+        <small id="mDate" style="color:#888; font-weight:bold;"></small>
+        <h2 id="mTitle">Post Title</h2>
+        <div id="mImageContainer"></div>
+        <p id="mContent">Post Content</p>
+        <div class="modal-actions">
+            <button class="modal-delete-btn" id="mDeleteBtn">Delete</button>
+            <button class="modal-edit-btn" id="mEditBtn">Edit this post</button>
+        </div>
+    </div>
+</div>
+
+<div class="floating-btn" onclick="openAdminPanel()">
+    <span class="cat-emoji"> </span>
+    <img src="meo.jpg" alt="" onerror="this.style.display='none'">
+</div>
+
+<script>
+    window.onload = function() { goHome(); };
+
+    function goHome() {
+        document.getElementById('home-hero').style.display = 'block';
+        document.getElementById('journal-scroll-area').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'none';
+        document.getElementById('category-menu').style.display = 'none';
+        document.getElementById('decor-container').style.display = 'none';
+        document.body.className = ''; 
+    }
+
+    function toggleCategories() {
+        const menu = document.getElementById('category-menu');
+        menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function switchTheme(themeName) {
+        document.getElementById('home-hero').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'none'; 
+        document.getElementById('journal-scroll-area').style.display = 'block'; 
+        document.getElementById('decor-container').style.display = 'block'; 
+        document.getElementById('category-menu').style.display = 'none'; 
+        
+        document.body.className = themeName;
+        document.getElementById('pCat').value = themeName; 
+        resetForm();
+
+        const names = {
+            'theme-plants': 'Plants Research', 
+            'theme-animals': 'Animals Research',
+            'theme-micro': 'Microbiology', 
+            'theme-else': 'Something Else'
+        };
+        document.getElementById('theme-title').innerText = names[themeName];
+        
+        document.getElementById('searchInput').value = '';
+        loadPosts();
+    }
+
+    function openAdminPanel() {
+        document.getElementById('admin-panel').style.display = 'flex';
+        
+        if(document.getElementById('editPostId').value === '') {
+            document.getElementById('image-blocks-container').innerHTML = '';
+            addImageBlock();
+        }
+    }
+
+    function closeAdminPanel() {
+        document.getElementById('admin-panel').style.display = 'none';
+    }
+
+    function addImageBlock() {
+        const container = document.getElementById('image-blocks-container');
+        const block = document.createElement('div');
+        block.className = 'image-upload-block';
+        block.innerHTML = `
+            <button type="button" class="btn-remove-img" onclick="this.parentElement.remove()">✕ Remove</button>
+            <input type="file" class="pImgFile" accept="image/*" style="margin-bottom: 10px; padding: 8px;">
+            <input type="text" class="pImgCaption" placeholder="Enter caption for this image..." style="margin-bottom: 0;">
+        `;
+        container.appendChild(block);
+    }
+
+    function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = e => reject(e);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function savePost() {
+        const id = document.getElementById('editPostId').value;
+        const title = document.getElementById('pTitle').value.trim();
+        const content = document.getElementById('pContent').value.trim();
+        const cat = document.getElementById('pCat').value;
+        const dateStr = document.getElementById('pDate').value;
+
+        if(!title || !content || !dateStr) {
+            alert("Please fill in Title, Date, and Content!");
+            return;
+        }
+
+        const blocks = document.querySelectorAll('.image-upload-block');
+        let newImagesData = [];
+        let hasNewFile = false;
+
+        for (let block of blocks) {
+            const fileInput = block.querySelector('.pImgFile');
+            const captionInput = block.querySelector('.pImgCaption');
+            
+            if (fileInput.files && fileInput.files[0]) {
+                hasNewFile = true;
+                const base64 = await readFileAsDataURL(fileInput.files[0]);
+                newImagesData.push({ src: base64, caption: captionInput.value.trim() });
+            }
+        }
+
+        let finalImages = newImagesData;
+        
+        if (id && !hasNewFile) {
+            const posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
+            const oldPost = posts.find(p => p.id == id);
+            if (oldPost) {
+                if(oldPost.images) finalImages = oldPost.images;
+                else if (oldPost.image) finalImages = [{ src: oldPost.image, caption: '' }];
+            }
+        }
+
+        finalizeSave(id, title, content, cat, dateStr, finalImages);
+    }
+
+    function finalizeSave(id, title, content, cat, dateStr, imagesArray) {
+        let posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
+        
+        if (id) {
+            const index = posts.findIndex(p => p.id == id);
+            if(index !== -1) posts[index] = { id: Number(id), title, content, cat, date: dateStr, images: imagesArray };
+        } else {
+            posts.push({ id: Date.now(), title, content, cat, date: dateStr, images: imagesArray });
+        }
+
+        localStorage.setItem('myScienceBlogV2', JSON.stringify(posts));
+        alert("Post saved successfully!"); 
+        closeAdminPanel(); 
+        resetForm();
+        switchTheme(cat);
+    }
+
+    function resetForm() {
+        document.getElementById('editPostId').value = '';
+        document.getElementById('pTitle').value = '';
+        document.getElementById('pDate').value = '';
+        document.getElementById('pContent').value = '';
+        document.getElementById('image-blocks-container').innerHTML = ''; 
+        document.getElementById('formTitle').innerText = "Create New Post";
+    }
+
+    function searchPosts() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        loadPosts(query);
+    }
+
+    function loadPosts(searchQuery = '') {
+        const grid = document.getElementById('main-grid');
+        const currentTheme = document.body.className;
+        let posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
+        
+        grid.innerHTML = '';
+        let filteredPosts = posts.filter(p => p.cat === currentTheme);
+        if (searchQuery) filteredPosts = filteredPosts.filter(p => p.title.toLowerCase().includes(searchQuery));
+        
+        filteredPosts.reverse().forEach(post => {
+            const card = document.createElement('div');
+            card.className = 'post-card';
+            
+            let thumbnailHTML = '';
+            if (post.images && post.images.length > 0) {
+                thumbnailHTML = `<img src="${post.images[0].src}" class="post-image">`;
+            } else if (post.image) { 
+                thumbnailHTML = `<img src="${post.image}" class="post-image">`;
+            }
+
+            card.innerHTML = `
+                <small>${post.date}</small>
+                <h3>${post.title}</h3>
+                ${thumbnailHTML}
+                <p>${post.content}</p>
+                <div class="card-footer">
+                    <span class="read-more" onclick="readFullPost(${post.id})">Read more ></span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function readFullPost(postId) {
+        const posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
+        const post = posts.find(p => p.id == postId);
+        
+        if(post) {
+            document.getElementById('mTitle').innerText = post.title;
+            document.getElementById('mDate').innerText = post.date;
+            document.getElementById('mContent').innerText = post.content;
+            
+            const imgContainer = document.getElementById('mImageContainer');
+            let imgHTML = '';
+            
+            if (post.images && post.images.length > 0) {
+                post.images.forEach(img => {
+                    imgHTML += `
+                        <div class="figure-container">
+                            <img src="${img.src}">
+                            ${img.caption ? `<figcaption>${img.caption}</figcaption>` : ''}
+                        </div>
+                    `;
+                });
+            } else if (post.image) { 
+                imgHTML = `<div class="figure-container"><img src="${post.image}"></div>`;
+            }
+            imgContainer.innerHTML = imgHTML;
+
+            document.getElementById('mEditBtn').onclick = function() { closeModal(); editPost(post.id); };
+            document.getElementById('mDeleteBtn').onclick = function() { deletePost(post.id, post.cat); };
+
+            document.getElementById('postModal').style.display = 'flex';
+        }
+    }
+    
+    function deletePost(postId, cat) {
+        if (confirm("Are you sure you want to delete this post?")) {
+            let posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
+            posts = posts.filter(p => p.id != postId);
+            localStorage.setItem('myScienceBlogV2', JSON.stringify(posts)); 
+            closeModal(); 
+            switchTheme(cat); 
+        }
+    }
+
+    function closeModal(e) {
+        if (!e || e.target.id === 'postModal' || e.target.className === 'close-modal') {
+            document.getElementById('postModal').style.display = 'none';
+        }
+    }
+
+    function editPost(postId) {
+        const posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
+        const post = posts.find(p => p.id == postId);
+        
+        if(post) {
+            openAdminPanel(); 
+            
+            document.getElementById('editPostId').value = post.id;
+            document.getElementById('pCat').value = post.cat;
+            document.getElementById('pTitle').value = post.title;
+            document.getElementById('pDate').value = post.date;
+            document.getElementById('pContent').value = post.content;
+            
+            document.getElementById('image-blocks-container').innerHTML = '';
+            document.getElementById('formTitle').innerText = "Edit Post";
+        }
+    }
+</script>
+
+</body>
+</html>
