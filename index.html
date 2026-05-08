@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nga's Science Journal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lora:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:wght@600;700&display=swap" rel="stylesheet">
     
     <style>
         /* =========================================
@@ -15,6 +15,8 @@
             --a-bg: #f2f1e3; --a-card: #d4d18d; 
             --m-bg: #e5e5e5; --m-card: #4a4a4a; 
             --e-bg: #d9e4ea; --e-card: #8eb9cf; 
+            --login-btn: #334125; /* Màu xanh rêu giống ảnh */
+            --login-bg: #eeeadd; /* Nền be nhạt giống ảnh */
         }
 
         body { 
@@ -46,18 +48,12 @@
             .search-container input { width: 100%; max-width: none; transform: translateY(0); }
             .nav-item { transform: translateY(0); }
             
-            /* =========================================
-               ĐOẠN CODE ĐIỀU CHỈNH CON MÈO TRÊN MOBILE
-               ========================================= */
             .floating-btn {
-                /* 1. DI CHUYỂN VỊ TRÍ */
-                left: auto !important;      /* Gỡ bỏ vị trí bên phải */
-                right: 5px !important;       /* Nằm sát mép bên trái (cách lề 15px, bạn có thể tăng/giảm số này) */
-                bottom: 25px !important;     /* Cách đáy màn hình 25px */
-                
-                /* 2. THU NHỎ KÍCH THƯỚC */
-                width: 65px !important;      /* Chiều rộng của ảnh mèo (đã thu nhỏ từ 110px xuống 70px) */
-                height: 65px !important;     /* Chiều cao của ảnh mèo */
+                left: auto !important; 
+                right: 5px !important; 
+                bottom: 25px !important; 
+                width: 65px !important; 
+                height: 65px !important; 
             }
         }
 
@@ -79,62 +75,32 @@
         .cat-btn:hover { background: #f0f0f0; }
 
         /* =========================================
-           4. DECORATIONS (FIXED TẬN GỐC)
+           4. DECORATIONS
            ========================================= */
        .decor-container {
             position: fixed; top: 75px; left: 0; width: 100vw; height: calc(100vh - 75px);
             pointer-events: none; z-index: 1; display: none; overflow: hidden;
         }
-        .decor-top { 
-            position: absolute; top: 0; left: 0; 
-            width: 100vw; height: 600px; 
-            background-size: 100% auto; 
-            background-position: top center; 
-            background-repeat: no-repeat; 
-            transition: 0.3s;
-        }
-        .decor-bottom { 
-            position: absolute; bottom: 0; left: 0; 
-            width: 100vw; height: 600px; 
-            background-size: 100% auto; 
-            background-position: bottom center; 
-            background-repeat: no-repeat; 
-        }
+        .decor-top { position: absolute; top: 0; left: 0; width: 100vw; height: 600px; background-size: 100% auto; background-position: top center; background-repeat: no-repeat; transition: 0.3s; }
+        .decor-bottom { position: absolute; bottom: 0; left: 0; width: 100vw; height: 600px; background-size: 100% auto; background-position: bottom center; background-repeat: no-repeat; }
 
-        /* ----- CÀI ĐẶT CHO MÁY TÍNH (Mặc định) ----- */
         .theme-plants .decor-top { background-image: url('1.png'); }
         .theme-animals .decor-top { background-image: url('4.png'); }
         .theme-micro .decor-top { background-image: url('9.png'); }
         .theme-else .decor-top { background-image: url('10.png'); }
-        /* Bạn giữ nguyên các dòng decor-bottom cho PC nếu có file png tương ứng */
 
-        /* ----- CÀI ĐẶT RIÊNG CHO ĐIỆN THOẠI ----- */
         @media (max-width: 800px) {
-            /* Đổi sang các file .jpg bạn đã cung cấp */
             .theme-plants .decor-top { background-image: url('2.png'); }
             .theme-animals .decor-top { background-image: url('3.png'); }
             .theme-micro .decor-top { background-image: url('7.png'); }
-            
-            .decor-top {
-                height: 100% !important; /* Cho ảnh phủ hết chiều cao màn hình điện thoại */
-                background-size: cover !important; /* Đảm bảo ảnh không bị méo */
-                background-position: center !important;
-            }
-            
-            /* Ẩn ảnh trang trí dưới chân trang trên mobile để tránh rối mắt */
+            .decor-top { height: 100% !important; background-size: cover !important; background-position: center !important; }
             .decor-bottom { display: none; } 
         }
 
         /* =========================================
            5. POSTS CONTAINER
            ========================================= */
-        .scroll-area {
-            position: relative; z-index: 10; 
-            height: calc(100vh - 75px); 
-            overflow-y: auto; 
-            padding-bottom: 100px; display: none;
-            background: transparent; 
-        }
+        .scroll-area { position: relative; z-index: 10; height: calc(100vh - 75px); overflow-y: auto; padding-bottom: 100px; display: none; background: transparent; }
         .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
         .page-title { font-family: 'Lora', serif; font-size: 40px; text-align: center; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 4px; display: block; color: inherit; }
         .post-grid { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); }
@@ -143,31 +109,22 @@
         /* =========================================
            6. POST CARD
            ========================================= */
-        .post-card {
-            padding: 30px; border-radius: 8px; position: relative;
-            display: flex; flex-direction: column; height: 350px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1); overflow: hidden;
-            background: white; 
-        }
+        .post-card { padding: 30px; border-radius: 8px; position: relative; display: flex; flex-direction: column; height: 350px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); overflow: hidden; background: white; }
         .post-card img.post-image { width: 100%; height: 160px; object-fit: cover; border-radius: 4px; margin-top: 15px; border: 1px solid rgba(0,0,0,0.1); }
         .post-card h3 { font-family: 'Lora', serif; font-size: 20px; margin: 15px 0 10px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .post-card p { flex-grow: 1; line-height: 1.6; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0;}
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 13px; font-weight: bold; }
         .read-more { text-decoration: underline; cursor: pointer; color: inherit; }
 
-        /* Theme Colors Applied */
         body.theme-plants { background: var(--p-bg); color: white; }
         .theme-plants .post-card { background: var(--p-card); color: #1b2612; }
-        
         body.theme-animals { background: var(--a-bg); color: #333; }
         .theme-animals .logo { color: var(--a-card); }
         .theme-animals .post-card { background: var(--a-card); border: 1px solid rgba(0,0,0,0.1);}
-        
         body.theme-micro { background: var(--m-bg); color: #1a1a1a; }
         .theme-micro .logo { color: #555; }
         .theme-micro .post-card { background: var(--m-card); color: white; }
         .theme-micro .page-title { color: #ffffff; } 
-        
         body.theme-else { background: var(--e-bg); color: #2c3e50; }
         .theme-else .logo { color: var(--e-card); }
         .theme-else .post-card { background: var(--e-card); color: white; }
@@ -175,90 +132,123 @@
         /* =========================================
            7. CREATE POST MODAL 
            ========================================= */
-        .admin-wrapper { 
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-            background: rgba(0,0,0,0.6); z-index: 5000; 
-            display: none; justify-content: center; align-items: center; 
-            backdrop-filter: blur(4px);
-        }
-        .admin-section { 
-            width: 90%; max-width: 650px; padding: 40px; 
-            background: #ffffff; border-radius: 12px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
-            color: #333; position: relative; max-height: 85vh; overflow-y: auto;
-        }
-        .admin-section .close-modal { 
-            position: absolute; top: 15px; right: 20px; font-size: 30px; 
-            cursor: pointer; color: #999; border: none; background: none; 
-            transition: 0.2s;
-        }
+        .admin-wrapper { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 5000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .admin-section { width: 90%; max-width: 650px; padding: 40px; background: #ffffff; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); color: #333; position: relative; max-height: 85vh; overflow-y: auto; }
+        .admin-section .close-modal { position: absolute; top: 15px; right: 20px; font-size: 30px; cursor: pointer; color: #999; border: none; background: none; transition: 0.2s; }
         .admin-section .close-modal:hover { color: #111; }
-
         .admin-section h3 { font-family: 'Lora', serif; font-size: 26px; margin-top: 0; margin-bottom: 25px; color: #222; }
         .admin-section label { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: block; color: #444;}
-        
-        .admin-section input[type="text"], 
-        .admin-section input[type="date"], 
-        .admin-section select, 
-        .admin-section textarea { 
-            width: 100%; padding: 12px 15px; margin-bottom: 20px; 
-            border: 1px solid #ddd; border-radius: 8px; 
-            background: #f9f9f9; font-family: 'Inter', sans-serif; font-size: 14px; 
-            transition: all 0.3s ease; box-sizing: border-box;
-        }
-        .admin-section input:focus, 
-        .admin-section select:focus, 
-        .admin-section textarea:focus { border-color: #333; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
-        
+        .admin-section input[type="text"], .admin-section input[type="date"], .admin-section select, .admin-section textarea { width: 100%; padding: 12px 15px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; font-family: 'Inter', sans-serif; font-size: 14px; transition: all 0.3s ease; box-sizing: border-box; }
+        .admin-section input:focus, .admin-section select:focus, .admin-section textarea:focus { border-color: #333; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
         .image-upload-block { background: #f4f6f8; padding: 20px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; position: relative; }
         .btn-add-img { background: #fdf5d3; color: #333; border: 1px solid #e8dca4; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; margin-bottom: 20px; transition: 0.2s; font-size: 14px;}
         .btn-add-img:hover { background: #faeaa0; }
         .btn-remove-img { color: #e74c3c; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: bold; position: absolute; top: 12px; right: 15px; }
-
         .btn-post { background: #1a1a1a; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: 8px; letter-spacing: 1px; transition: 0.3s; }
         .btn-post:hover { background: #333; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 
         /* =========================================
            8. DETAILS MODAL & FLOATING CAT BUTTON
            ========================================= */
-        .floating-btn {
-            position: fixed; bottom: 30px; right: 30px; width: 110px; height: 110px;
-            background: transparent; border: none; 
-            cursor: pointer; z-index: 3000; transition: transform 0.2s;
-            display: flex; justify-content: center; align-items: center;
-        }
+        .floating-btn { position: fixed; bottom: 30px; right: 30px; width: 110px; height: 110px; background: transparent; border: none; cursor: pointer; z-index: 3000; transition: transform 0.2s; display: flex; justify-content: center; align-items: center; }
         .floating-btn:hover { transform: scale(1.1); } 
         .cat-emoji { font-size: 53px; position: absolute; z-index: 1; }
         .floating-btn img { width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 2; border-radius: 50%;} 
 
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 4000; display: none;
-            justify-content: center; align-items: center; backdrop-filter: blur(5px);
-        }
-        .modal-content {
-            background: white; color: #333; width: 90%; max-width: 750px;
-            max-height: 85vh; overflow-y: auto; border-radius: 12px;
-            padding: 40px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 4000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: white; color: #333; width: 90%; max-width: 750px; max-height: 85vh; overflow-y: auto; border-radius: 12px; padding: 40px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         .close-modal { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #888; border: none; background: none; }
         .close-modal:hover { color: #111; }
-        
         .figure-container { margin: 25px 0; text-align: center; background: #f4f4f4; padding: 15px; border-radius: 8px;}
         .figure-container img { width: 100%; max-height: 500px; object-fit: contain; border-radius: 5px; display: block; margin: 0 auto; }
         .figure-container figcaption { font-style: italic; color: #555; margin-top: 10px; font-size: 15px; }
-        
         .modal-content h2 { font-family: 'Lora', serif; font-size: 32px; margin-bottom: 5px; }
         .modal-content p { line-height: 1.8; font-size: 16px; white-space: pre-wrap; }
-        
         .modal-actions { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: flex-end; gap: 15px;}
         .modal-edit-btn { background: #1a1a1a; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; }
         .modal-edit-btn:hover { background: #333; }
         .modal-delete-btn { background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; }
         .modal-delete-btn:hover { background: #c0392b; }
+
+        /* =========================================
+           9. LOGIN OVERLAY (UPDATED TO MATCH IMAGE)
+           ========================================= */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--login-bg); z-index: 9999; display: flex; 
+            justify-content: center; align-items: center;
+        }
+        .login-box {
+            background: white; padding: 45px 40px; border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08); width: 90%; max-width: 420px;
+            text-align: center; box-sizing: border-box;
+        }
+        .login-box h2 { 
+            font-family: 'Lora', serif; font-size: 26px; 
+            margin-top: 0; margin-bottom: 15px; color: var(--login-btn); 
+        }
+        .login-box p { font-size: 14.5px; color: #555; margin-bottom: 25px; }
+        
+        /* Hiệu ứng chuyển slide giữa chọn quyền và nhập mật khẩu */
+        .login-slide { transition: opacity 0.3s ease; }
+        
+        .role-buttons { display: flex; gap: 15px; margin-top: 20px; }
+        .role-btn { 
+            flex: 1; padding: 14px; border-radius: 6px; border: 2px solid var(--login-btn); 
+            background: white; color: var(--login-btn); font-weight: 600; 
+            cursor: pointer; transition: 0.2s; font-size: 15px; font-family: 'Inter';
+        }
+        .role-btn:hover { background: var(--login-btn); color: white; }
+
+        .login-box input {
+            width: 100%; padding: 14px; margin-bottom: 20px; border: 1px solid #d1d1d1;
+            border-radius: 6px; box-sizing: border-box; font-family: 'Inter'; 
+            font-size: 15px; outline: none; transition: border 0.2s;
+        }
+        .login-box input:focus { border-color: var(--login-btn); }
+        
+        .btn-group { display: flex; gap: 12px; }
+        .login-box button.submit-btn {
+            background: var(--login-btn); color: white; padding: 14px; border: none;
+            border-radius: 6px; flex: 1; font-weight: 600; cursor: pointer; 
+            font-family: 'Inter'; font-size: 15px; transition: 0.2s;
+        }
+        .login-box button.submit-btn:hover { background: #222b19; }
+        .login-box button.back-btn {
+            background: #f0f0f0; color: #555; padding: 14px; border: none;
+            border-radius: 6px; flex: 0.3; font-weight: 600; cursor: pointer; 
+            font-family: 'Inter'; transition: 0.2s;
+        }
+        .login-box button.back-btn:hover { background: #e0e0e0; color: #333; }
+        
+        .error-msg { color: #e74c3c; font-size: 13px; display: none; margin-top: 15px; font-weight: 500;}
     </style>
 </head>
 <body>
+
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>Welcome to Nga's Science Journal</h2>
+        
+        <div id="roleSelection" class="login-slide">
+            <p>Please select your role to continue</p>
+            <div class="role-buttons">
+                <button class="role-btn" onclick="selectRole('viewer')">Viewer</button>
+                <button class="role-btn" onclick="selectRole('admin')">Administrator</button>
+            </div>
+        </div>
+
+        <div id="passwordSection" class="login-slide" style="display: none;">
+            <p>Please enter password for <strong id="selectedRoleText" style="color:var(--login-btn);"></strong></p>
+            <input type="password" id="loginPassword" placeholder="Enter password..." onkeypress="handleEnter(event)">
+            <div class="btn-group">
+                <button class="back-btn" onclick="goBackToRoles()">&#8592;</button>
+                <button class="submit-btn" onclick="checkLogin()">Login</button>
+            </div>
+            <div id="loginError" class="error-msg">Incorrect password! Please try again.</div>
+        </div>
+    </div>
+</div>
 
 <header>
     <a href="#" onclick="goHome()" class="logo">Nga's Science Journal</a>
@@ -316,7 +306,6 @@
         <button type="button" class="btn-add-img" onclick="addImageBlock()">+ Add Image & Caption</button>
 
         <button class="btn-post" id="submitBtn" onclick="savePost()">SAVE POST</button>
-        <p style="font-size: 12px; color: #888; margin-top: 15px; text-align: center;">*Note: If editing an old post without uploading new images, the existing images will be kept automatically.</p>
     </div>
 </div>
 
@@ -347,8 +336,95 @@
 </div>
 
 <script>
-    window.onload = function() { goHome(); };
+    let currentUserRole = ''; 
+    let selectedLoginRole = '';
 
+    window.onload = function() { 
+        const savedRole = sessionStorage.getItem('journalRole');
+        if(savedRole) {
+            currentUserRole = savedRole;
+            document.getElementById('login-overlay').style.display = 'none';
+            applyRolePermissions();
+            goHome();
+        }
+    };
+
+    /* ===== LOGIN SYSTEM ===== */
+    function selectRole(role) {
+        selectedLoginRole = role;
+        
+        // Hiệu ứng mờ dần
+        document.getElementById('roleSelection').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('roleSelection').style.display = 'none';
+            document.getElementById('passwordSection').style.display = 'block';
+            document.getElementById('selectedRoleText').innerText = role === 'admin' ? 'Admin' : 'Viewer';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('loginPassword').value = '';
+            
+            // Hiện section mới
+            setTimeout(() => {
+                document.getElementById('passwordSection').style.opacity = '1';
+                document.getElementById('loginPassword').focus();
+            }, 50);
+        }, 300);
+    }
+
+    function goBackToRoles() {
+        document.getElementById('passwordSection').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('passwordSection').style.display = 'none';
+            document.getElementById('roleSelection').style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('roleSelection').style.opacity = '1';
+            }, 50);
+        }, 300);
+    }
+
+    function handleEnter(e) {
+        if(e.key === 'Enter') checkLogin();
+    }
+
+    function checkLogin() {
+        const pass = document.getElementById('loginPassword').value;
+        const errorMsg = document.getElementById('loginError');
+
+        // Mật khẩu đã được mã hóa Base64
+        const encodedInput = btoa(pass); 
+
+        if (selectedLoginRole === 'admin' && encodedInput === 'bmd1eWVudGh1eXF1eW5obmdh') {
+            currentUserRole = 'admin';
+            sessionStorage.setItem('journalRole', 'admin');
+        } else if (selectedLoginRole === 'viewer' && encodedInput === 'bmdhc2NpZW5jZWpvdXJuYWw=') {
+            currentUserRole = 'viewer';
+            sessionStorage.setItem('journalRole', 'viewer');
+        } else {
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+        
+        // Hiệu ứng tắt màn hình đăng nhập
+        document.getElementById('login-overlay').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('login-overlay').style.display = 'none';
+            applyRolePermissions();
+            goHome();
+        }, 300);
+    }
+
+    function applyRolePermissions() {
+        const catBtn = document.querySelector('.floating-btn');
+        if(currentUserRole === 'viewer') {
+            catBtn.style.display = 'none';
+        } else {
+            catBtn.style.display = 'flex';
+        }
+    }
+
+    /* ===== NAVIGATION & THEME ===== */
     function goHome() {
         document.getElementById('home-hero').style.display = 'block';
         document.getElementById('journal-scroll-area').style.display = 'none';
@@ -374,30 +450,23 @@
         document.getElementById('pCat').value = themeName; 
         resetForm();
 
-        const names = {
-            'theme-plants': 'Plants Research', 
-            'theme-animals': 'Animals Research',
-            'theme-micro': 'Microbiology', 
-            'theme-else': 'Something Else'
-        };
+        const names = { 'theme-plants': 'Plants Research', 'theme-animals': 'Animals Research', 'theme-micro': 'Microbiology', 'theme-else': 'Something Else' };
         document.getElementById('theme-title').innerText = names[themeName];
         
         document.getElementById('searchInput').value = '';
         loadPosts();
     }
 
+    /* ===== POST MANAGEMENT ===== */
     function openAdminPanel() {
         document.getElementById('admin-panel').style.display = 'flex';
-        
         if(document.getElementById('editPostId').value === '') {
             document.getElementById('image-blocks-container').innerHTML = '';
             addImageBlock();
         }
     }
 
-    function closeAdminPanel() {
-        document.getElementById('admin-panel').style.display = 'none';
-    }
+    function closeAdminPanel() { document.getElementById('admin-panel').style.display = 'none'; }
 
     function addImageBlock() {
         const container = document.getElementById('image-blocks-container');
@@ -427,10 +496,7 @@
         const cat = document.getElementById('pCat').value;
         const dateStr = document.getElementById('pDate').value;
 
-        if(!title || !content || !dateStr) {
-            alert("Please fill in Title, Date, and Content!");
-            return;
-        }
+        if(!title || !content || !dateStr) { alert("Please fill in Title, Date, and Content!"); return; }
 
         const blocks = document.querySelectorAll('.image-upload-block');
         let newImagesData = [];
@@ -439,7 +505,6 @@
         for (let block of blocks) {
             const fileInput = block.querySelector('.pImgFile');
             const captionInput = block.querySelector('.pImgCaption');
-            
             if (fileInput.files && fileInput.files[0]) {
                 hasNewFile = true;
                 const base64 = await readFileAsDataURL(fileInput.files[0]);
@@ -458,17 +523,12 @@
             }
         }
 
-        finalizeSave(id, title, content, cat, dateStr, finalImages);
-    }
-
-    function finalizeSave(id, title, content, cat, dateStr, imagesArray) {
         let posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
-        
         if (id) {
             const index = posts.findIndex(p => p.id == id);
-            if(index !== -1) posts[index] = { id: Number(id), title, content, cat, date: dateStr, images: imagesArray };
+            if(index !== -1) posts[index] = { id: Number(id), title, content, cat, date: dateStr, images: finalImages };
         } else {
-            posts.push({ id: Date.now(), title, content, cat, date: dateStr, images: imagesArray });
+            posts.push({ id: Date.now(), title, content, cat, date: dateStr, images: finalImages });
         }
 
         localStorage.setItem('myScienceBlogV2', JSON.stringify(posts));
@@ -487,10 +547,7 @@
         document.getElementById('formTitle').innerText = "Create New Post";
     }
 
-    function searchPosts() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
-        loadPosts(query);
-    }
+    function searchPosts() { loadPosts(document.getElementById('searchInput').value.toLowerCase()); }
 
     function loadPosts(searchQuery = '') {
         const grid = document.getElementById('main-grid');
@@ -504,22 +561,13 @@
         filteredPosts.reverse().forEach(post => {
             const card = document.createElement('div');
             card.className = 'post-card';
-            
-            let thumbnailHTML = '';
-            if (post.images && post.images.length > 0) {
-                thumbnailHTML = `<img src="${post.images[0].src}" class="post-image">`;
-            } else if (post.image) { 
-                thumbnailHTML = `<img src="${post.image}" class="post-image">`;
-            }
-
+            let thumbnailHTML = post.images && post.images.length > 0 ? `<img src="${post.images[0].src}" class="post-image">` : (post.image ? `<img src="${post.image}" class="post-image">` : '');
             card.innerHTML = `
                 <small>${post.date}</small>
                 <h3>${post.title}</h3>
                 ${thumbnailHTML}
                 <p>${post.content}</p>
-                <div class="card-footer">
-                    <span class="read-more" onclick="readFullPost(${post.id})">Read more ></span>
-                </div>
+                <div class="card-footer"><span class="read-more" onclick="readFullPost(${post.id})">Read more ></span></div>
             `;
             grid.appendChild(card);
         });
@@ -534,25 +582,26 @@
             document.getElementById('mDate').innerText = post.date;
             document.getElementById('mContent').innerText = post.content;
             
-            const imgContainer = document.getElementById('mImageContainer');
             let imgHTML = '';
-            
             if (post.images && post.images.length > 0) {
-                post.images.forEach(img => {
-                    imgHTML += `
-                        <div class="figure-container">
-                            <img src="${img.src}">
-                            ${img.caption ? `<figcaption>${img.caption}</figcaption>` : ''}
-                        </div>
-                    `;
-                });
+                post.images.forEach(img => { imgHTML += `<div class="figure-container"><img src="${img.src}">${img.caption ? `<figcaption>${img.caption}</figcaption>` : ''}</div>`; });
             } else if (post.image) { 
                 imgHTML = `<div class="figure-container"><img src="${post.image}"></div>`;
             }
-            imgContainer.innerHTML = imgHTML;
+            document.getElementById('mImageContainer').innerHTML = imgHTML;
 
-            document.getElementById('mEditBtn').onclick = function() { closeModal(); editPost(post.id); };
-            document.getElementById('mDeleteBtn').onclick = function() { deletePost(post.id, post.cat); };
+            const editBtn = document.getElementById('mEditBtn');
+            const deleteBtn = document.getElementById('mDeleteBtn');
+            
+            if(currentUserRole === 'viewer') {
+                editBtn.style.display = 'none';
+                deleteBtn.style.display = 'none';
+            } else {
+                editBtn.style.display = 'inline-block';
+                deleteBtn.style.display = 'inline-block';
+                editBtn.onclick = function() { closeModal(); editPost(post.id); };
+                deleteBtn.onclick = function() { deletePost(post.id, post.cat); };
+            }
 
             document.getElementById('postModal').style.display = 'flex';
         }
@@ -575,18 +624,14 @@
     }
 
     function editPost(postId) {
-        const posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
-        const post = posts.find(p => p.id == postId);
-        
+        const post = (JSON.parse(localStorage.getItem('myScienceBlogV2')) || []).find(p => p.id == postId);
         if(post) {
             openAdminPanel(); 
-            
             document.getElementById('editPostId').value = post.id;
             document.getElementById('pCat').value = post.cat;
             document.getElementById('pTitle').value = post.title;
             document.getElementById('pDate').value = post.date;
             document.getElementById('pContent').value = post.content;
-            
             document.getElementById('image-blocks-container').innerHTML = '';
             document.getElementById('formTitle').innerText = "Edit Post";
         }
