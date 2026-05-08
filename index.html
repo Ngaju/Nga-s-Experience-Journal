@@ -42,10 +42,24 @@
         .nav-item:hover { color: #888; }
 
         @media (max-width: 800px) {
-            header { flex-direction: column; height: 80%; padding: 15px 5%; gap: 15px; }
+            header { flex-direction: column; height: ; padding: 15px 5%; gap: 15px; }
             .search-container input { width: 100%; max-width: none; transform: translateY(0); }
             .nav-item { transform: translateY(0); }
         }
+
+        /* =========================================
+               ĐOẠN CODE ĐIỀU CHỈNH CON MÈO TRÊN MOBILE
+               ========================================= */
+            .floating-btn {
+                /* 1. DI CHUYỂN VỊ TRÍ */
+                right: auto;      /* Gỡ bỏ vị trí bên phải */
+                left: 15px;       /* Nằm sát mép bên trái (cách lề 15px, bạn có thể tăng/giảm số này) */
+                bottom: 25px;     /* Cách đáy màn hình 25px */
+                
+                /* 2. THU NHỎ KÍCH THƯỚC */
+                width: 70px;      /* Chiều rộng của ảnh mèo (đã thu nhỏ từ 110px xuống 70px) */
+                height: 70px;     /* Chiều cao của ảnh mèo */
+            }
 
         /* =========================================
            3. HERO & CATEGORIES MENU
