@@ -15,8 +15,8 @@
             --a-bg: #f2f1e3; --a-card: #d4d18d; 
             --m-bg: #e5e5e5; --m-card: #4a4a4a; 
             --e-bg: #d9e4ea; --e-card: #8eb9cf; 
-            --login-btn: #334125; /* Màu xanh rêu giống ảnh */
-            --login-bg: #eeeadd; /* Nền be nhạt giống ảnh */
+            --login-btn: #334125; 
+            --login-bg: #eeeadd; 
         }
 
         body { 
@@ -42,10 +42,13 @@
         nav { display: flex; gap: 30px; flex: 1; justify-content: flex-end; align-items: center; margin: 0; }
         .nav-item { text-decoration: none; color: #333; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; border: none; background: none; padding: 0; transform: translateY(1px); }
         .nav-item:hover { color: #888; }
+        .logout-btn { color: #e74c3c; display: none; }
+        .logout-btn:hover { color: #c0392b; }
 
         @media (max-width: 800px) {
-            header { flex-direction: column; height: 80%; padding: 15px 5%; gap: 15px; }
+            header { flex-direction: column; height: auto; padding: 15px 5%; gap: 15px; }
             .search-container input { width: 100%; max-width: none; transform: translateY(0); }
+            nav { flex-wrap: wrap; justify-content: center; gap: 15px; }
             .nav-item { transform: translateY(0); }
             
             .floating-btn {
@@ -171,12 +174,12 @@
         .modal-delete-btn:hover { background: #c0392b; }
 
         /* =========================================
-           9. LOGIN OVERLAY (UPDATED TO MATCH IMAGE)
+           9. LOGIN OVERLAY
            ========================================= */
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: var(--login-bg); z-index: 9999; display: flex; 
-            justify-content: center; align-items: center;
+            justify-content: center; align-items: center; transition: opacity 0.3s ease;
         }
         .login-box {
             background: white; padding: 45px 40px; border-radius: 12px;
@@ -189,7 +192,6 @@
         }
         .login-box p { font-size: 14.5px; color: #555; margin-bottom: 25px; }
         
-        /* Hiệu ứng chuyển slide giữa chọn quyền và nhập mật khẩu */
         .login-slide { transition: opacity 0.3s ease; }
         
         .role-buttons { display: flex; gap: 15px; margin-top: 20px; }
@@ -238,7 +240,7 @@
             </div>
         </div>
 
-        <div id="passwordSection" class="login-slide" style="display: none;">
+        <div id="passwordSection" class="login-slide" style="display: none; opacity: 0;">
             <p>Please enter password for <strong id="selectedRoleText" style="color:var(--login-btn);"></strong></p>
             <input type="password" id="loginPassword" placeholder="Enter password..." onkeypress="handleEnter(event)">
             <div class="btn-group">
@@ -258,6 +260,7 @@
     <nav>
         <button class="nav-item" onclick="goHome()">About me</button>
         <button class="nav-item" onclick="toggleCategories()">Categories</button>
+        <button class="nav-item logout-btn" id="logoutBtn" onclick="logout()">Logout</button>
     </nav>
 </header>
 
@@ -349,11 +352,10 @@
         }
     };
 
-    /* ===== LOGIN SYSTEM ===== */
+    /* ===== LOGIN / LOGOUT SYSTEM ===== */
     function selectRole(role) {
         selectedLoginRole = role;
         
-        // Hiệu ứng mờ dần
         document.getElementById('roleSelection').style.opacity = '0';
         setTimeout(() => {
             document.getElementById('roleSelection').style.display = 'none';
@@ -362,7 +364,6 @@
             document.getElementById('loginError').style.display = 'none';
             document.getElementById('loginPassword').value = '';
             
-            // Hiện section mới
             setTimeout(() => {
                 document.getElementById('passwordSection').style.opacity = '1';
                 document.getElementById('loginPassword').focus();
@@ -390,7 +391,6 @@
         const pass = document.getElementById('loginPassword').value;
         const errorMsg = document.getElementById('loginError');
 
-        // Mật khẩu đã được mã hóa Base64
         const encodedInput = btoa(pass); 
 
         if (selectedLoginRole === 'admin' && encodedInput === 'bmd1eWVudGh1eXF1eW5obmdh') {
@@ -406,7 +406,6 @@
 
         errorMsg.style.display = 'none';
         
-        // Hiệu ứng tắt màn hình đăng nhập
         document.getElementById('login-overlay').style.opacity = '0';
         setTimeout(() => {
             document.getElementById('login-overlay').style.display = 'none';
@@ -414,9 +413,37 @@
             goHome();
         }, 300);
     }
+    
+    function logout() {
+        if(confirm("Are you sure you want to logout?")) {
+            sessionStorage.removeItem('journalRole');
+            currentUserRole = '';
+            selectedLoginRole = '';
+            
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('passwordSection').style.display = 'none';
+            document.getElementById('passwordSection').style.opacity = '0';
+            document.getElementById('roleSelection').style.display = 'block';
+            document.getElementById('roleSelection').style.opacity = '1';
+            document.getElementById('loginError').style.display = 'none';
+            
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.querySelector('.floating-btn').style.display = 'none';
+            
+            const overlay = document.getElementById('login-overlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+            }, 50);
+            
+            goHome();
+        }
+    }
 
     function applyRolePermissions() {
         const catBtn = document.querySelector('.floating-btn');
+        document.getElementById('logoutBtn').style.display = 'inline-block';
+        
         if(currentUserRole === 'viewer') {
             catBtn.style.display = 'none';
         } else {
