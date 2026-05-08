@@ -6,6 +6,9 @@
     <title>Nga's Science Journal</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:wght@600;700&display=swap" rel="stylesheet">
     
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         /* =========================================
            1. THEME COLORS
@@ -26,7 +29,7 @@
         }
 
         /* =========================================
-           2. NAVIGATION BAR (HEADER)
+           2. NAVIGATION BAR
            ========================================= */
         header {
             background: white; padding: 0 5%; height: 75px;
@@ -108,6 +111,9 @@
         .page-title { font-family: 'Lora', serif; font-size: 40px; text-align: center; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 4px; display: block; color: inherit; }
         .post-grid { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); }
         @media (max-width: 900px) { .post-grid { grid-template-columns: 1fr; } }
+        
+        /* Hiệu ứng loading từ Firebase */
+        .loading-text { text-align: center; width: 100%; font-size: 18px; grid-column: 1 / -1; font-style: italic; opacity: 0.8;}
 
         /* =========================================
            6. POST CARD
@@ -143,6 +149,10 @@
         .admin-section label { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: block; color: #444;}
         .admin-section input[type="text"], .admin-section input[type="date"], .admin-section select, .admin-section textarea { width: 100%; padding: 12px 15px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; font-family: 'Inter', sans-serif; font-size: 14px; transition: all 0.3s ease; box-sizing: border-box; }
         .admin-section input:focus, .admin-section select:focus, .admin-section textarea:focus { border-color: #333; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
+        
+        /* Cảnh báo kích thước ảnh */
+        .img-warning { font-size: 12px; color: #e67e22; margin-bottom: 10px; display: block; font-style: italic; }
+
         .image-upload-block { background: #f4f6f8; padding: 20px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; position: relative; }
         .btn-add-img { background: #fdf5d3; color: #333; border: 1px solid #e8dca4; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; margin-bottom: 20px; transition: 0.2s; font-size: 14px;}
         .btn-add-img:hover { background: #faeaa0; }
@@ -231,7 +241,6 @@
 <div id="login-overlay">
     <div class="login-box">
         <h2>Welcome to Nga's Science Journal</h2>
-        
         <div id="roleSelection" class="login-slide">
             <p>Please select your role to continue</p>
             <div class="role-buttons">
@@ -239,7 +248,6 @@
                 <button class="role-btn" onclick="selectRole('admin')">Administrator</button>
             </div>
         </div>
-
         <div id="passwordSection" class="login-slide" style="display: none; opacity: 0;">
             <p>Please enter password for <strong id="selectedRoleText" style="color:var(--login-btn);"></strong></p>
             <input type="password" id="loginPassword" placeholder="Enter password..." onkeypress="handleEnter(event)">
@@ -305,6 +313,7 @@
         <textarea id="pContent" rows="8" placeholder="Post Content..."></textarea>
         
         <label>Images (Optional)</label>
+        <span class="img-warning">Vui lòng nén ảnh (nhỏ hơn 2MB/ảnh) trước khi đăng để tránh nặng CSDL.</span>
         <div id="image-blocks-container"></div>
         <button type="button" class="btn-add-img" onclick="addImageBlock()">+ Add Image & Caption</button>
 
@@ -339,10 +348,31 @@
 </div>
 
 <script>
+    // ==========================================
+    // CẤU HÌNH FIREBASE CỦA NGA
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAacfi3FzqETa4qJtLxLeB9yGSpFgA_wwk",
+        authDomain: "nga-science.firebaseapp.com",
+        databaseURL: "https://nga-science-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "nga-science",
+        storageBucket: "nga-science.firebasestorage.app",
+        messagingSenderId: "443306470323",
+        appId: "1:443306470323:web:ac10b25974b5ed2c16f9c6"
+    };
+
+    // Khởi tạo Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Mảng chứa toàn bộ dữ liệu (Thay thế cho localStorage)
+    let globalPosts = [];
+
     let currentUserRole = ''; 
     let selectedLoginRole = '';
 
     window.onload = function() { 
+        // 1. Kiểm tra đăng nhập
         const savedRole = sessionStorage.getItem('journalRole');
         if(savedRole) {
             currentUserRole = savedRole;
@@ -350,12 +380,27 @@
             applyRolePermissions();
             goHome();
         }
+
+        // 2. Lắng nghe dữ liệu từ Firebase
+        // Tính năng này giúp nếu bạn sửa ở thiết bị A, thiết bị B mở web sẽ tự đổi
+        database.ref('science_posts').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                globalPosts = data;
+            } else {
+                globalPosts = []; // Nếu chưa có bài nào
+            }
+            
+            // Nếu người dùng đang xem trang chuyên mục, tự động load lại bài viết
+            if (document.body.className.includes('theme-')) {
+                loadPosts();
+            }
+        });
     };
 
     /* ===== LOGIN / LOGOUT SYSTEM ===== */
     function selectRole(role) {
         selectedLoginRole = role;
-        
         document.getElementById('roleSelection').style.opacity = '0';
         setTimeout(() => {
             document.getElementById('roleSelection').style.display = 'none';
@@ -363,7 +408,6 @@
             document.getElementById('selectedRoleText').innerText = role === 'admin' ? 'Admin' : 'Viewer';
             document.getElementById('loginError').style.display = 'none';
             document.getElementById('loginPassword').value = '';
-            
             setTimeout(() => {
                 document.getElementById('passwordSection').style.opacity = '1';
                 document.getElementById('loginPassword').focus();
@@ -376,21 +420,15 @@
         setTimeout(() => {
             document.getElementById('passwordSection').style.display = 'none';
             document.getElementById('roleSelection').style.display = 'block';
-            
-            setTimeout(() => {
-                document.getElementById('roleSelection').style.opacity = '1';
-            }, 50);
+            setTimeout(() => { document.getElementById('roleSelection').style.opacity = '1'; }, 50);
         }, 300);
     }
 
-    function handleEnter(e) {
-        if(e.key === 'Enter') checkLogin();
-    }
+    function handleEnter(e) { if(e.key === 'Enter') checkLogin(); }
 
     function checkLogin() {
         const pass = document.getElementById('loginPassword').value;
         const errorMsg = document.getElementById('loginError');
-
         const encodedInput = btoa(pass); 
 
         if (selectedLoginRole === 'admin' && encodedInput === 'bmd1eWVudGh1eXF1eW5obmdh') {
@@ -405,7 +443,6 @@
         }
 
         errorMsg.style.display = 'none';
-        
         document.getElementById('login-overlay').style.opacity = '0';
         setTimeout(() => {
             document.getElementById('login-overlay').style.display = 'none';
@@ -432,10 +469,7 @@
             
             const overlay = document.getElementById('login-overlay');
             overlay.style.display = 'flex';
-            setTimeout(() => {
-                overlay.style.opacity = '1';
-            }, 50);
-            
+            setTimeout(() => { overlay.style.opacity = '1'; }, 50);
             goHome();
         }
     }
@@ -443,7 +477,6 @@
     function applyRolePermissions() {
         const catBtn = document.querySelector('.floating-btn');
         document.getElementById('logoutBtn').style.display = 'inline-block';
-        
         if(currentUserRole === 'viewer') {
             catBtn.style.display = 'none';
         } else {
@@ -481,7 +514,12 @@
         document.getElementById('theme-title').innerText = names[themeName];
         
         document.getElementById('searchInput').value = '';
-        loadPosts();
+        
+        // Hiển thị chữ Loading trong lúc chờ Firebase
+        document.getElementById('main-grid').innerHTML = '<div class="loading-text">Loading posts from database...</div>';
+        
+        // Timeout nhẹ để UI giật lag
+        setTimeout(() => { loadPosts(); }, 300);
     }
 
     /* ===== POST MANAGEMENT ===== */
@@ -525,6 +563,9 @@
 
         if(!title || !content || !dateStr) { alert("Please fill in Title, Date, and Content!"); return; }
 
+        document.getElementById('submitBtn').innerText = "SAVING TO FIREBASE...";
+        document.getElementById('submitBtn').disabled = true;
+
         const blocks = document.querySelectorAll('.image-upload-block');
         let newImagesData = [];
         let hasNewFile = false;
@@ -542,27 +583,35 @@
         let finalImages = newImagesData;
         
         if (id && !hasNewFile) {
-            const posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
-            const oldPost = posts.find(p => p.id == id);
+            const oldPost = globalPosts.find(p => p.id == id);
             if (oldPost) {
                 if(oldPost.images) finalImages = oldPost.images;
                 else if (oldPost.image) finalImages = [{ src: oldPost.image, caption: '' }];
             }
         }
 
-        let posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
         if (id) {
-            const index = posts.findIndex(p => p.id == id);
-            if(index !== -1) posts[index] = { id: Number(id), title, content, cat, date: dateStr, images: finalImages };
+            const index = globalPosts.findIndex(p => p.id == id);
+            if(index !== -1) globalPosts[index] = { id: Number(id), title, content, cat, date: dateStr, images: finalImages };
         } else {
-            posts.push({ id: Date.now(), title, content, cat, date: dateStr, images: finalImages });
+            globalPosts.push({ id: Date.now(), title, content, cat, date: dateStr, images: finalImages });
         }
 
-        localStorage.setItem('myScienceBlogV2', JSON.stringify(posts));
-        alert("Post saved successfully!"); 
-        closeAdminPanel(); 
-        resetForm();
-        switchTheme(cat);
+        // BẮN DỮ LIỆU LÊN FIREBASE THAY VÌ LOCALSTORAGE
+        database.ref('science_posts').set(globalPosts)
+            .then(() => {
+                alert("Post saved to database successfully!"); 
+                document.getElementById('submitBtn').innerText = "SAVE POST";
+                document.getElementById('submitBtn').disabled = false;
+                closeAdminPanel(); 
+                resetForm();
+                switchTheme(cat);
+            })
+            .catch((error) => {
+                alert("Error saving post: " + error.message);
+                document.getElementById('submitBtn').innerText = "SAVE POST";
+                document.getElementById('submitBtn').disabled = false;
+            });
     }
 
     function resetForm() {
@@ -579,13 +628,20 @@
     function loadPosts(searchQuery = '') {
         const grid = document.getElementById('main-grid');
         const currentTheme = document.body.className;
-        let posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
         
         grid.innerHTML = '';
-        let filteredPosts = posts.filter(p => p.cat === currentTheme);
+        let filteredPosts = globalPosts.filter(p => p.cat === currentTheme);
         if (searchQuery) filteredPosts = filteredPosts.filter(p => p.title.toLowerCase().includes(searchQuery));
         
-        filteredPosts.reverse().forEach(post => {
+        if (filteredPosts.length === 0) {
+            grid.innerHTML = '<div class="loading-text">No posts found in this category yet.</div>';
+            return;
+        }
+
+        // Tạo mảng phụ để đảo ngược mà không làm ảnh hưởng mảng gốc
+        const displayPosts = [...filteredPosts].reverse();
+
+        displayPosts.forEach(post => {
             const card = document.createElement('div');
             card.className = 'post-card';
             let thumbnailHTML = post.images && post.images.length > 0 ? `<img src="${post.images[0].src}" class="post-image">` : (post.image ? `<img src="${post.image}" class="post-image">` : '');
@@ -601,8 +657,7 @@
     }
 
     function readFullPost(postId) {
-        const posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
-        const post = posts.find(p => p.id == postId);
+        const post = globalPosts.find(p => p.id == postId);
         
         if(post) {
             document.getElementById('mTitle').innerText = post.title;
@@ -635,12 +690,14 @@
     }
     
     function deletePost(postId, cat) {
-        if (confirm("Are you sure you want to delete this post?")) {
-            let posts = JSON.parse(localStorage.getItem('myScienceBlogV2')) || [];
-            posts = posts.filter(p => p.id != postId);
-            localStorage.setItem('myScienceBlogV2', JSON.stringify(posts)); 
-            closeModal(); 
-            switchTheme(cat); 
+        if (confirm("Are you sure you want to delete this post from database?")) {
+            globalPosts = globalPosts.filter(p => p.id != postId);
+            
+            // XÓA TRÊN FIREBASE
+            database.ref('science_posts').set(globalPosts).then(() => {
+                closeModal(); 
+                switchTheme(cat); 
+            });
         }
     }
 
@@ -651,7 +708,7 @@
     }
 
     function editPost(postId) {
-        const post = (JSON.parse(localStorage.getItem('myScienceBlogV2')) || []).find(p => p.id == postId);
+        const post = globalPosts.find(p => p.id == postId);
         if(post) {
             openAdminPanel(); 
             document.getElementById('editPostId').value = post.id;
