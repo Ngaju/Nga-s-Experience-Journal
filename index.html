@@ -112,7 +112,7 @@
         .post-grid { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); }
         @media (max-width: 900px) { .post-grid { grid-template-columns: 1fr; } }
         
-        /* Hiệu ứng loading từ Firebase */
+        /* Loading effect from Firebase */
         .loading-text { text-align: center; width: 100%; font-size: 18px; grid-column: 1 / -1; font-style: italic; opacity: 0.8;}
 
         /* =========================================
@@ -150,7 +150,7 @@
         .admin-section input[type="text"], .admin-section input[type="date"], .admin-section select, .admin-section textarea { width: 100%; padding: 12px 15px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; font-family: 'Inter', sans-serif; font-size: 14px; transition: all 0.3s ease; box-sizing: border-box; }
         .admin-section input:focus, .admin-section select:focus, .admin-section textarea:focus { border-color: #333; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
         
-        /* Cảnh báo kích thước ảnh */
+        /* Image size warning */
         .img-warning { font-size: 12px; color: #e67e22; margin-bottom: 10px; display: block; font-style: italic; }
 
         .image-upload-block { background: #f4f6f8; padding: 20px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; position: relative; }
@@ -313,7 +313,7 @@
         <textarea id="pContent" rows="8" placeholder="Post Content..."></textarea>
         
         <label>Images (Optional)</label>
-        <span class="img-warning">Vui lòng nén ảnh (nhỏ hơn 2MB/ảnh) trước khi đăng để tránh nặng CSDL.</span>
+        <span class="img-warning">Please compress images (less than 2MB/image) before posting to prevent database overload.</span>
         <div id="image-blocks-container"></div>
         <button type="button" class="btn-add-img" onclick="addImageBlock()">+ Add Image & Caption</button>
 
@@ -349,7 +349,7 @@
 
 <script>
     // ==========================================
-    // CẤU HÌNH FIREBASE CỦA NGA
+    // NGA'S FIREBASE CONFIGURATION
     // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyAacfi3FzqETa4qJtLxLeB9yGSpFgA_wwk",
@@ -361,18 +361,18 @@
         appId: "1:443306470323:web:ac10b25974b5ed2c16f9c6"
     };
 
-    // Khởi tạo Firebase
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // Mảng chứa toàn bộ dữ liệu (Thay thế cho localStorage)
+    // Array containing all data (Replaces localStorage)
     let globalPosts = [];
 
     let currentUserRole = ''; 
     let selectedLoginRole = '';
 
     window.onload = function() { 
-        // 1. Kiểm tra đăng nhập
+        // 1. Check login status
         const savedRole = sessionStorage.getItem('journalRole');
         if(savedRole) {
             currentUserRole = savedRole;
@@ -381,17 +381,17 @@
             goHome();
         }
 
-        // 2. Lắng nghe dữ liệu từ Firebase
-        // Tính năng này giúp nếu bạn sửa ở thiết bị A, thiết bị B mở web sẽ tự đổi
+        // 2. Listen to data from Firebase
+        // This feature helps auto-sync across devices
         database.ref('science_posts').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 globalPosts = data;
             } else {
-                globalPosts = []; // Nếu chưa có bài nào
+                globalPosts = []; // If there are no posts yet
             }
             
-            // Nếu người dùng đang xem trang chuyên mục, tự động load lại bài viết
+            // If user is viewing a category page, auto-reload posts
             if (document.body.className.includes('theme-')) {
                 loadPosts();
             }
@@ -401,18 +401,32 @@
     /* ===== LOGIN / LOGOUT SYSTEM ===== */
     function selectRole(role) {
         selectedLoginRole = role;
-        document.getElementById('roleSelection').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('roleSelection').style.display = 'none';
-            document.getElementById('passwordSection').style.display = 'block';
-            document.getElementById('selectedRoleText').innerText = role === 'admin' ? 'Admin' : 'Viewer';
-            document.getElementById('loginError').style.display = 'none';
-            document.getElementById('loginPassword').value = '';
+        
+        if (role === 'viewer') {
+            // Bypass password for Viewer
+            currentUserRole = 'viewer';
+            sessionStorage.setItem('journalRole', 'viewer');
+            document.getElementById('login-overlay').style.opacity = '0';
             setTimeout(() => {
-                document.getElementById('passwordSection').style.opacity = '1';
-                document.getElementById('loginPassword').focus();
-            }, 50);
-        }, 300);
+                document.getElementById('login-overlay').style.display = 'none';
+                applyRolePermissions();
+                goHome();
+            }, 300);
+        } else {
+            // Require password for Administrator
+            document.getElementById('roleSelection').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('roleSelection').style.display = 'none';
+                document.getElementById('passwordSection').style.display = 'block';
+                document.getElementById('selectedRoleText').innerText = 'Administrator';
+                document.getElementById('loginError').style.display = 'none';
+                document.getElementById('loginPassword').value = '';
+                setTimeout(() => {
+                    document.getElementById('passwordSection').style.opacity = '1';
+                    document.getElementById('loginPassword').focus();
+                }, 50);
+            }, 300);
+        }
     }
 
     function goBackToRoles() {
@@ -429,26 +443,22 @@
     function checkLogin() {
         const pass = document.getElementById('loginPassword').value;
         const errorMsg = document.getElementById('loginError');
-        const encodedInput = btoa(pass); 
 
-        if (selectedLoginRole === 'admin' && encodedInput === 'bmd1eWVudGh1eXF1eW5obmdh') {
+        // Check if entered password matches the requested admin password
+        if (pass === 'nguyenthuyquynhnga') {
             currentUserRole = 'admin';
             sessionStorage.setItem('journalRole', 'admin');
-        } else if (selectedLoginRole === 'viewer' && encodedInput === 'bmdhc2NpZW5jZWpvdXJuYWw=') {
-            currentUserRole = 'viewer';
-            sessionStorage.setItem('journalRole', 'viewer');
+            
+            errorMsg.style.display = 'none';
+            document.getElementById('login-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('login-overlay').style.display = 'none';
+                applyRolePermissions();
+                goHome();
+            }, 300);
         } else {
             errorMsg.style.display = 'block';
-            return;
         }
-
-        errorMsg.style.display = 'none';
-        document.getElementById('login-overlay').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('login-overlay').style.display = 'none';
-            applyRolePermissions();
-            goHome();
-        }, 300);
     }
     
     function logout() {
@@ -515,10 +525,10 @@
         
         document.getElementById('searchInput').value = '';
         
-        // Hiển thị chữ Loading trong lúc chờ Firebase
+        // Show loading text while waiting for Firebase
         document.getElementById('main-grid').innerHTML = '<div class="loading-text">Loading posts from database...</div>';
         
-        // Timeout nhẹ để UI giật lag
+        // Slight timeout to prevent UI lag
         setTimeout(() => { loadPosts(); }, 300);
     }
 
@@ -597,7 +607,7 @@
             globalPosts.push({ id: Date.now(), title, content, cat, date: dateStr, images: finalImages });
         }
 
-        // BẮN DỮ LIỆU LÊN FIREBASE THAY VÌ LOCALSTORAGE
+        // PUSH DATA TO FIREBASE INSTEAD OF LOCALSTORAGE
         database.ref('science_posts').set(globalPosts)
             .then(() => {
                 alert("Post saved to database successfully!"); 
@@ -638,7 +648,7 @@
             return;
         }
 
-        // Tạo mảng phụ để đảo ngược mà không làm ảnh hưởng mảng gốc
+        // Create an auxiliary array to reverse without affecting the original array
         const displayPosts = [...filteredPosts].reverse();
 
         displayPosts.forEach(post => {
@@ -693,7 +703,7 @@
         if (confirm("Are you sure you want to delete this post from database?")) {
             globalPosts = globalPosts.filter(p => p.id != postId);
             
-            // XÓA TRÊN FIREBASE
+            // DELETE ON FIREBASE
             database.ref('science_posts').set(globalPosts).then(() => {
                 closeModal(); 
                 switchTheme(cat); 
