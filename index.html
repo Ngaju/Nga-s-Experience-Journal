@@ -112,7 +112,6 @@
         .post-grid { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); }
         @media (max-width: 900px) { .post-grid { grid-template-columns: 1fr; } }
         
-        /* Hiệu ứng loading từ Firebase */
         .loading-text { text-align: center; width: 100%; font-size: 18px; grid-column: 1 / -1; font-style: italic; opacity: 0.8;}
 
         /* =========================================
@@ -150,15 +149,23 @@
         .admin-section input[type="text"], .admin-section input[type="date"], .admin-section select, .admin-section textarea { width: 100%; padding: 12px 15px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; font-family: 'Inter', sans-serif; font-size: 14px; transition: all 0.3s ease; box-sizing: border-box; }
         .admin-section input:focus, .admin-section select:focus, .admin-section textarea:focus { border-color: #333; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
         
-        /* Cảnh báo kích thước ảnh */
         .img-warning { font-size: 12px; color: #e67e22; margin-bottom: 10px; display: block; font-style: italic; }
 
-        .image-upload-block { background: #f4f6f8; padding: 20px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; position: relative; }
-        .btn-add-img { background: #fdf5d3; color: #333; border: 1px solid #e8dca4; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; margin-bottom: 20px; transition: 0.2s; font-size: 14px;}
+        .image-upload-block { background: #ffffff; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; position: relative; }
+        .btn-add-img { background: #fdf5d3; color: #333; border: 1px solid #e8dca4; padding: 10px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; margin-bottom: 15px; transition: 0.2s; font-size: 13px;}
         .btn-add-img:hover { background: #faeaa0; }
         .btn-remove-img { color: #e74c3c; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: bold; position: absolute; top: 12px; right: 15px; }
-        .btn-post { background: #1a1a1a; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: 8px; letter-spacing: 1px; transition: 0.3s; }
+        .btn-post { background: #1a1a1a; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: 8px; letter-spacing: 1px; transition: 0.3s; margin-top: 10px;}
         .btn-post:hover { background: #333; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+        /* =========================================
+           NEW: SECTION STYLES
+           ========================================= */
+        .section-block { background: #f4f6f8; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 25px; position: relative; }
+        .btn-remove-section { position: absolute; top: 15px; right: 15px; color: #e74c3c; background: none; border: none; cursor: pointer; font-weight: bold; font-size: 13px;}
+        .btn-add-section { background: #e0e0e0; color: #333; border: 1px dashed #888; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; margin-bottom: 20px; transition: 0.2s; font-size: 14px;}
+        .btn-add-section:hover { background: #d0d0d0; }
+        .section-subtitle { font-weight: bold; margin-bottom: 5px; font-size: 14px; display: block; color: #444; }
 
         /* =========================================
            8. DETAILS MODAL & FLOATING CAT BUTTON
@@ -309,13 +316,10 @@
         <label>Date</label>
         <input type="date" id="pDate">
 
-        <label>Post Content</label>
-        <textarea id="pContent" rows="8" placeholder="Post Content..."></textarea>
+        <span class="img-warning" style="margin-top: 15px; font-size: 14px; font-weight:bold; color: #444;">--- Post Content Sections ---</span>
         
-        <label>Images (Optional)</label>
-        <span class="img-warning">Please compress images (under 2MB/image) before posting to avoid database overload.</span>
-        <div id="image-blocks-container"></div>
-        <button type="button" class="btn-add-img" onclick="addImageBlock()">+ Add Image & Caption</button>
+        <div id="sections-container"></div>
+        <button type="button" class="btn-add-section" onclick="addSectionBlock()">+ Add New Section (Part)</button>
 
         <button class="btn-post" id="submitBtn" onclick="savePost()">SAVE POST</button>
     </div>
@@ -333,8 +337,9 @@
         <button class="close-modal" onclick="closeModal(event)">&times;</button>
         <small id="mDate" style="color:#888; font-weight:bold;"></small>
         <h2 id="mTitle">Post Title</h2>
-        <div id="mImageContainer"></div>
-        <p id="mContent">Post Content</p>
+        
+        <div id="mContentBody"></div>
+        
         <div class="modal-actions">
             <button class="modal-delete-btn" id="mDeleteBtn">Delete</button>
             <button class="modal-edit-btn" id="mEditBtn">Edit this post</button>
@@ -361,18 +366,17 @@
         appId: "1:443306470323:web:ac10b25974b5ed2c16f9c6"
     };
 
-    // Khởi tạo Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // Mảng chứa toàn bộ dữ liệu (Thay thế cho localStorage)
     let globalPosts = [];
-
     let currentUserRole = ''; 
     let selectedLoginRole = '';
+    
+    // Biến đếm để gán ID cho từng section khi tạo mới
+    let sectionCounter = 0;
 
     window.onload = function() { 
-        // 1. Kiểm tra đăng nhập
         const savedRole = sessionStorage.getItem('journalRole');
         if(savedRole) {
             currentUserRole = savedRole;
@@ -381,39 +385,24 @@
             goHome();
         }
 
-        // 2. Lắng nghe dữ liệu từ Firebase
-        // Tính năng này giúp nếu bạn sửa ở thiết bị A, thiết bị B mở web sẽ tự đổi
         database.ref('science_posts').on('value', (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                globalPosts = data;
-            } else {
-                globalPosts = []; // Nếu chưa có bài nào
-            }
+            if (data) globalPosts = data;
+            else globalPosts = [];
             
-            // Nếu người dùng đang xem trang chuyên mục, tự động load lại bài viết
-            if (document.body.className.includes('theme-')) {
-                loadPosts();
-            }
+            if (document.body.className.includes('theme-')) loadPosts();
         });
     };
 
     /* ===== LOGIN / LOGOUT SYSTEM ===== */
     function selectRole(role) {
         selectedLoginRole = role;
-        
         if (role === 'viewer') {
-            // Viewer vào thẳng web không cần pass
             currentUserRole = 'viewer';
             sessionStorage.setItem('journalRole', 'viewer');
             document.getElementById('login-overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('login-overlay').style.display = 'none';
-                applyRolePermissions();
-                goHome();
-            }, 300);
+            setTimeout(() => { document.getElementById('login-overlay').style.display = 'none'; applyRolePermissions(); goHome(); }, 300);
         } else {
-            // Admin thì mới hiện bảng pass
             document.getElementById('roleSelection').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('roleSelection').style.display = 'none';
@@ -421,10 +410,7 @@
                 document.getElementById('selectedRoleText').innerText = 'Administrator';
                 document.getElementById('loginError').style.display = 'none';
                 document.getElementById('loginPassword').value = '';
-                setTimeout(() => {
-                    document.getElementById('passwordSection').style.opacity = '1';
-                    document.getElementById('loginPassword').focus();
-                }, 50);
+                setTimeout(() => { document.getElementById('passwordSection').style.opacity = '1'; document.getElementById('loginPassword').focus(); }, 50);
             }, 300);
         }
     }
@@ -443,55 +429,32 @@
     function checkLogin() {
         const pass = document.getElementById('loginPassword').value;
         const errorMsg = document.getElementById('loginError');
-
-        // Check xem mật khẩu admin có đúng không
         if (pass === 'nguyenthuyquynhnga') {
             currentUserRole = 'admin';
             sessionStorage.setItem('journalRole', 'admin');
-            
             errorMsg.style.display = 'none';
             document.getElementById('login-overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('login-overlay').style.display = 'none';
-                applyRolePermissions();
-                goHome();
-            }, 300);
-        } else {
-            errorMsg.style.display = 'block';
-        }
+            setTimeout(() => { document.getElementById('login-overlay').style.display = 'none'; applyRolePermissions(); goHome(); }, 300);
+        } else { errorMsg.style.display = 'block'; }
     }
     
     function logout() {
         if(confirm("Are you sure you want to logout?")) {
-            sessionStorage.removeItem('journalRole');
-            currentUserRole = '';
-            selectedLoginRole = '';
-            
+            sessionStorage.removeItem('journalRole'); currentUserRole = ''; selectedLoginRole = '';
             document.getElementById('loginPassword').value = '';
-            document.getElementById('passwordSection').style.display = 'none';
-            document.getElementById('passwordSection').style.opacity = '0';
-            document.getElementById('roleSelection').style.display = 'block';
-            document.getElementById('roleSelection').style.opacity = '1';
+            document.getElementById('passwordSection').style.display = 'none'; document.getElementById('passwordSection').style.opacity = '0';
+            document.getElementById('roleSelection').style.display = 'block'; document.getElementById('roleSelection').style.opacity = '1';
             document.getElementById('loginError').style.display = 'none';
-            
-            document.getElementById('logoutBtn').style.display = 'none';
-            document.querySelector('.floating-btn').style.display = 'none';
-            
-            const overlay = document.getElementById('login-overlay');
-            overlay.style.display = 'flex';
-            setTimeout(() => { overlay.style.opacity = '1'; }, 50);
-            goHome();
+            document.getElementById('logoutBtn').style.display = 'none'; document.querySelector('.floating-btn').style.display = 'none';
+            const overlay = document.getElementById('login-overlay'); overlay.style.display = 'flex';
+            setTimeout(() => { overlay.style.opacity = '1'; }, 50); goHome();
         }
     }
 
     function applyRolePermissions() {
         const catBtn = document.querySelector('.floating-btn');
         document.getElementById('logoutBtn').style.display = 'inline-block';
-        if(currentUserRole === 'viewer') {
-            catBtn.style.display = 'none';
-        } else {
-            catBtn.style.display = 'flex';
-        }
+        if(currentUserRole === 'viewer') catBtn.style.display = 'none'; else catBtn.style.display = 'flex';
     }
 
     /* ===== NAVIGATION & THEME ===== */
@@ -522,43 +485,78 @@
 
         const names = { 'theme-plants': 'Plants Research', 'theme-animals': 'Animals Research', 'theme-micro': 'Microbiology', 'theme-else': 'Something Else' };
         document.getElementById('theme-title').innerText = names[themeName];
-        
         document.getElementById('searchInput').value = '';
-        
-        // Hiển thị chữ Loading trong lúc chờ Firebase
         document.getElementById('main-grid').innerHTML = '<div class="loading-text">Loading posts from database...</div>';
-        
-        // Timeout nhẹ để UI giật lag
         setTimeout(() => { loadPosts(); }, 300);
     }
 
-    /* ===== POST MANAGEMENT ===== */
+    /* ===== THAY ĐỔI LOGIC POST BÀI DẠNG SECTION ===== */
     function openAdminPanel() {
         document.getElementById('admin-panel').style.display = 'flex';
         if(document.getElementById('editPostId').value === '') {
-            document.getElementById('image-blocks-container').innerHTML = '';
-            addImageBlock();
+            document.getElementById('sections-container').innerHTML = '';
+            addSectionBlock(); // Tự động thêm Section 1 khi tạo bài mới
         }
     }
 
     function closeAdminPanel() { document.getElementById('admin-panel').style.display = 'none'; }
 
-    function addImageBlock() {
-        const container = document.getElementById('image-blocks-container');
+    // Hàm tạo khung HTML cho một Phần (Section)
+    function addSectionBlock(data = null) {
+        sectionCounter++;
+        const currentSecId = `section-${sectionCounter}`;
+        const container = document.getElementById('sections-container');
+        
+        const block = document.createElement('div');
+        block.className = 'section-block';
+        block.id = currentSecId;
+
+        const subtitleValue = data ? data.subtitle : "";
+        const contentValue = data ? data.content : "";
+
+        block.innerHTML = `
+            <button type="button" class="btn-remove-section" onclick="this.parentElement.remove()">✕ Remove Section</button>
+            <label class="section-subtitle">Subtitle (e.g., Part 1, Introduction...)</label>
+            <input type="text" class="pSecSubtitle" placeholder="Enter subtitle..." value="${subtitleValue}">
+            
+            <label>Content</label>
+            <textarea class="pSecContent" rows="5" placeholder="Write content for this section...">${contentValue}</textarea>
+            
+            <label>Images for this section (Optional)</label>
+            <span class="img-warning" style="margin-top:0;">Compress images under 2MB.</span>
+            <div id="imgs-${currentSecId}"></div>
+            <button type="button" class="btn-add-img" onclick="addImageToSection('${currentSecId}')">+ Add Image to this Section</button>
+        `;
+        
+        container.appendChild(block);
+
+        // Nạp lại danh sách ảnh cho phần này nếu đang Edit
+        if(data && data.images && data.images.length > 0) {
+            data.images.forEach(img => addImageToSection(currentSecId, img));
+        }
+    }
+
+    // Hàm tạo khung upload ảnh cho từng Phần cụ thể
+    function addImageToSection(sectionId, imgData = null) {
+        const imgContainer = document.getElementById(`imgs-${sectionId}`);
         const block = document.createElement('div');
         block.className = 'image-upload-block';
         
-        // Đã sửa lại giao diện nút File Input để luôn hiển thị tiếng Anh
+        const existingSrc = imgData ? imgData.src : "";
+        const captionValue = imgData && imgData.caption ? imgData.caption : "";
+        const fileLabel = existingSrc ? "Image loaded (Choose another to replace)" : "No file chosen";
+
         block.innerHTML = `
             <button type="button" class="btn-remove-img" onclick="this.parentElement.remove()">✕ Remove</button>
+            <input type="hidden" class="pExistingImgSrc" value="${existingSrc}">
             <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer;">
                 <span style="background: #e0e0e0; padding: 8px 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; font-weight: 500; color: #333; transition: 0.2s;" onmouseover="this.style.background='#d0d0d0'" onmouseout="this.style.background='#e0e0e0'">Choose File</span>
-                <span class="file-name" style="font-size: 13px; color: #666; font-family: 'Inter', sans-serif;">No file chosen</span>
+                <span class="file-name" style="font-size: 13px; color: #666; font-family: 'Inter', sans-serif;">${fileLabel}</span>
                 <input type="file" class="pImgFile" accept="image/*" style="display: none;" onchange="this.previousElementSibling.innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
             </label>
-            <input type="text" class="pImgCaption" placeholder="Enter caption for this image..." style="margin-bottom: 0;">
+            <input type="text" class="pImgCaption" placeholder="Enter caption for this image..." value="${captionValue}" style="margin-bottom: 0;">
         `;
-        container.appendChild(block);
+        imgContainer.appendChild(block);
     }
 
     function readFileAsDataURL(file) {
@@ -573,47 +571,63 @@
     async function savePost() {
         const id = document.getElementById('editPostId').value;
         const title = document.getElementById('pTitle').value.trim();
-        const content = document.getElementById('pContent').value.trim();
         const cat = document.getElementById('pCat').value;
         const dateStr = document.getElementById('pDate').value;
 
-        if(!title || !content || !dateStr) { alert("Please fill in Title, Date, and Content!"); return; }
+        if(!title || !dateStr) { alert("Please fill in Title and Date!"); return; }
 
         document.getElementById('submitBtn').innerText = "SAVING TO FIREBASE...";
         document.getElementById('submitBtn').disabled = true;
 
-        const blocks = document.querySelectorAll('.image-upload-block');
-        let newImagesData = [];
-        let hasNewFile = false;
+        let finalSections = [];
+        const sectionNodes = document.querySelectorAll('.section-block');
 
-        for (let block of blocks) {
-            const fileInput = block.querySelector('.pImgFile');
-            const captionInput = block.querySelector('.pImgCaption');
-            if (fileInput.files && fileInput.files[0]) {
-                hasNewFile = true;
-                const base64 = await readFileAsDataURL(fileInput.files[0]);
-                newImagesData.push({ src: base64, caption: captionInput.value.trim() });
+        // Quét từng phần nội dung
+        for (let secNode of sectionNodes) {
+            let subtitle = secNode.querySelector('.pSecSubtitle').value.trim();
+            let content = secNode.querySelector('.pSecContent').value.trim();
+            let imgBlocks = secNode.querySelectorAll('.image-upload-block');
+            let secImages = [];
+
+            // Quét từng ảnh trong phần này
+            for (let imgBlock of imgBlocks) {
+                let fileInput = imgBlock.querySelector('.pImgFile');
+                let captionInput = imgBlock.querySelector('.pImgCaption');
+                let existingSrcInput = imgBlock.querySelector('.pExistingImgSrc');
+                
+                let finalSrc = existingSrcInput.value; 
+
+                if (fileInput.files && fileInput.files[0]) {
+                    finalSrc = await readFileAsDataURL(fileInput.files[0]);
+                }
+
+                if (finalSrc) {
+                    secImages.push({ src: finalSrc, caption: captionInput.value.trim() });
+                }
+            }
+
+            if(subtitle || content || secImages.length > 0) {
+                finalSections.push({ subtitle, content, images: secImages });
             }
         }
 
-        let finalImages = newImagesData;
-        
-        if (id && !hasNewFile) {
-            const oldPost = globalPosts.find(p => p.id == id);
-            if (oldPost) {
-                if(oldPost.images) finalImages = oldPost.images;
-                else if (oldPost.image) finalImages = [{ src: oldPost.image, caption: '' }];
-            }
+        if(finalSections.length === 0) {
+            alert("Please add at least one section with content!");
+            document.getElementById('submitBtn').innerText = "SAVE POST";
+            document.getElementById('submitBtn').disabled = false;
+            return;
         }
 
         if (id) {
             const index = globalPosts.findIndex(p => p.id == id);
-            if(index !== -1) globalPosts[index] = { id: Number(id), title, content, cat, date: dateStr, images: finalImages };
+            if(index !== -1) {
+                // Cập nhật cấu trúc bài viết sang dạng sections
+                globalPosts[index] = { id: Number(id), title, cat, date: dateStr, sections: finalSections };
+            }
         } else {
-            globalPosts.push({ id: Date.now(), title, content, cat, date: dateStr, images: finalImages });
+            globalPosts.push({ id: Date.now(), title, cat, date: dateStr, sections: finalSections });
         }
 
-        // BẮN DỮ LIỆU LÊN FIREBASE THAY VÌ LOCALSTORAGE
         database.ref('science_posts').set(globalPosts)
             .then(() => {
                 alert("Post saved to database successfully!"); 
@@ -634,9 +648,9 @@
         document.getElementById('editPostId').value = '';
         document.getElementById('pTitle').value = '';
         document.getElementById('pDate').value = '';
-        document.getElementById('pContent').value = '';
-        document.getElementById('image-blocks-container').innerHTML = ''; 
+        document.getElementById('sections-container').innerHTML = ''; 
         document.getElementById('formTitle').innerText = "Create New Post";
+        sectionCounter = 0;
     }
 
     function searchPosts() { loadPosts(document.getElementById('searchInput').value.toLowerCase()); }
@@ -654,18 +668,34 @@
             return;
         }
 
-        // Tạo mảng phụ để đảo ngược mà không làm ảnh hưởng mảng gốc
         const displayPosts = [...filteredPosts].reverse();
 
         displayPosts.forEach(post => {
             const card = document.createElement('div');
             card.className = 'post-card';
-            let thumbnailHTML = post.images && post.images.length > 0 ? `<img src="${post.images[0].src}" class="post-image">` : (post.image ? `<img src="${post.image}" class="post-image">` : '');
+            
+            let thumbnailHTML = '';
+            let previewText = '';
+
+            // Hỗ trợ cả 2 cấu trúc: Mới (sections) và Cũ (content, images)
+            if (post.sections && post.sections.length > 0) {
+                previewText = post.sections[0].content || post.sections[0].subtitle;
+                for(let sec of post.sections) {
+                    if(sec.images && sec.images.length > 0) {
+                        thumbnailHTML = `<img src="${sec.images[0].src}" class="post-image">`;
+                        break;
+                    }
+                }
+            } else {
+                thumbnailHTML = post.images && post.images.length > 0 ? `<img src="${post.images[0].src}" class="post-image">` : (post.image ? `<img src="${post.image}" class="post-image">` : '');
+                previewText = post.content || '';
+            }
+
             card.innerHTML = `
                 <small>${post.date}</small>
                 <h3>${post.title}</h3>
                 ${thumbnailHTML}
-                <p>${post.content}</p>
+                <p>${previewText}</p>
                 <div class="card-footer"><span class="read-more" onclick="readFullPost(${post.id})">Read more ></span></div>
             `;
             grid.appendChild(card);
@@ -678,25 +708,44 @@
         if(post) {
             document.getElementById('mTitle').innerText = post.title;
             document.getElementById('mDate').innerText = post.date;
-            document.getElementById('mContent').innerText = post.content;
             
-            let imgHTML = '';
-            if (post.images && post.images.length > 0) {
-                post.images.forEach(img => { imgHTML += `<div class="figure-container"><img src="${img.src}">${img.caption ? `<figcaption>${img.caption}</figcaption>` : ''}</div>`; });
-            } else if (post.image) { 
-                imgHTML = `<div class="figure-container"><img src="${post.image}"></div>`;
+            let contentBody = document.getElementById('mContentBody');
+            contentBody.innerHTML = '';
+
+            // Đổ dữ liệu các Phần nối tiếp nhau
+            if (post.sections) {
+                post.sections.forEach(sec => {
+                    let secHTML = `<div style="margin-bottom: 30px;">`;
+                    if(sec.subtitle) secHTML += `<h3 style="font-family: 'Lora', serif; font-size: 20px; color: #111; margin-bottom: 10px;">${sec.subtitle}</h3>`;
+                    if(sec.content) secHTML += `<p>${sec.content}</p>`;
+                    
+                    if(sec.images && sec.images.length > 0) {
+                        sec.images.forEach(img => {
+                            secHTML += `<div class="figure-container"><img src="${img.src}">${img.caption ? `<figcaption>${img.caption}</figcaption>` : ''}</div>`;
+                        });
+                    }
+                    secHTML += `</div>`;
+                    contentBody.innerHTML += secHTML;
+                });
+            } else {
+                // Tương thích ngược với bài đăng kiểu cũ
+                let secHTML = `<div style="margin-bottom: 30px;"><p>${post.content || ''}</p>`;
+                if (post.images && post.images.length > 0) {
+                    post.images.forEach(img => { secHTML += `<div class="figure-container"><img src="${img.src}">${img.caption ? `<figcaption>${img.caption}</figcaption>` : ''}</div>`; });
+                } else if (post.image) { 
+                    secHTML += `<div class="figure-container"><img src="${post.image}"></div>`;
+                }
+                secHTML += `</div>`;
+                contentBody.innerHTML = secHTML;
             }
-            document.getElementById('mImageContainer').innerHTML = imgHTML;
 
             const editBtn = document.getElementById('mEditBtn');
             const deleteBtn = document.getElementById('mDeleteBtn');
             
             if(currentUserRole === 'viewer') {
-                editBtn.style.display = 'none';
-                deleteBtn.style.display = 'none';
+                editBtn.style.display = 'none'; deleteBtn.style.display = 'none';
             } else {
-                editBtn.style.display = 'inline-block';
-                deleteBtn.style.display = 'inline-block';
+                editBtn.style.display = 'inline-block'; deleteBtn.style.display = 'inline-block';
                 editBtn.onclick = function() { closeModal(); editPost(post.id); };
                 deleteBtn.onclick = function() { deletePost(post.id, post.cat); };
             }
@@ -708,12 +757,7 @@
     function deletePost(postId, cat) {
         if (confirm("Are you sure you want to delete this post from database?")) {
             globalPosts = globalPosts.filter(p => p.id != postId);
-            
-            // XÓA TRÊN FIREBASE
-            database.ref('science_posts').set(globalPosts).then(() => {
-                closeModal(); 
-                switchTheme(cat); 
-            });
+            database.ref('science_posts').set(globalPosts).then(() => { closeModal(); switchTheme(cat); });
         }
     }
 
@@ -726,14 +770,22 @@
     function editPost(postId) {
         const post = globalPosts.find(p => p.id == postId);
         if(post) {
+            resetForm();
             openAdminPanel(); 
             document.getElementById('editPostId').value = post.id;
             document.getElementById('pCat').value = post.cat;
             document.getElementById('pTitle').value = post.title;
             document.getElementById('pDate').value = post.date;
-            document.getElementById('pContent').value = post.content;
-            document.getElementById('image-blocks-container').innerHTML = '';
             document.getElementById('formTitle').innerText = "Edit Post";
+
+            if (post.sections && post.sections.length > 0) {
+                // Nạp bài theo cấu trúc Section mới
+                post.sections.forEach(sec => addSectionBlock(sec));
+            } else {
+                // Đóng gói bài kiểu cũ thành Section 1 để Edit tiếp
+                let oldData = { subtitle: "General Info", content: post.content, images: post.images || (post.image ? [{src: post.image, caption:''}] : []) };
+                addSectionBlock(oldData);
+            }
         }
     }
 </script>
